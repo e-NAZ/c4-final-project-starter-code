@@ -13,22 +13,23 @@ const logger = createLogger('auth');
 const jwksUrl = 'https://dev-vico.us.auth0.com/.well-known/jwks.json';
 
 
-export const handler = async (
+const handler = async (
   event: CustomAuthorizerEvent
 ): Promise<CustomAuthorizerResult> => {
 
   logger.info('Authorizing a user', event.authorizationToken)
+  const todayDate = new Date().toISOString().slice(0, 10);
 
   try {
 
     const jwtToken = await verifyToken(event.authorizationToken)
 
-    logger.info('User was authorized', jwtToken)
+    logger.info('User authorized', jwtToken)
 
     return {
       principalId: jwtToken.sub,
       policyDocument: {
-        Version: '2012-10-17',
+        Version: todayDate,
         Statement: [
           {
             Action: 'execute-api:Invoke',
@@ -45,7 +46,7 @@ export const handler = async (
     return {
       principalId: 'user',
       policyDocument: {
-        Version: '2012-10-17',
+        Version: todayDate,
         Statement: [
           {
             Action: 'execute-api:Invoke',
@@ -72,18 +73,20 @@ async function verifyToken(authHeader: string): Promise<JwtPayload> {
 
     return verify(token, cert, { algorithms: ['RS256'] }) as JwtPayload
   } catch(err){
-    logger.error('Fail to authenticate', err)
+    logger.error('authentication failed!', err)
   }
 }
 
 function getToken(authHeader: string): string {
-  if (!authHeader) throw new Error('No authentication header')
+  if (!authHeader) throw new Error('token missing!')
 
   if (!authHeader.toLowerCase().startsWith('bearer '))
-    throw new Error('Invalid authentication header')
+    throw new Error('Invalid Bearer Token supplied')
 
   const split = authHeader.split(' ')
   const token = split[1]
 
   return token
 }
+
+export default handler;

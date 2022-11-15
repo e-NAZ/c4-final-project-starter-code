@@ -7,6 +7,7 @@ plugins:
   - serverless-webpack
   - serverless-iam-roles-per-function
   - serverless-reqvalidator-plugin
+  - serverless-plugin-tracing
   - serverless-aws-documentation
   
 
@@ -21,12 +22,15 @@ provider:
     lambda: true
     apiGateway: true
 
-  # Use these variables in the functions and resouorces section below. For example, 
+  # Use these variables in the functions and resources section below. For example, 
   # ${self:provider.environment.ATTACHMENT_S3_BUCKET}
   environment:
     PROJECT_NAME: udxtodo-serveless
     TODOS_TABLE: udxtodo-serverless-${self:provider.stage}
     ATTACHMENT_S3_BUCKET: testbucket365-serverless-${self:provider.stage}
+    CREATED_AT_INDEX_TODOS: CreatedAtIndex
+    SIGNED_URL_EXPIRATION: 300
+    
 
 
 custom:
@@ -68,18 +72,18 @@ custom:
   
   
   
-  #logs:
-    # Enable API Gateway logs
-   # restApi: true
+logs:
+    #Enable API Gateway logs
+    restApi: true
 
-  #iam:
-   # role:
-    #  statements:
-     #   - Effect: Allow
-     #     Action:
-     #       - xray:PutTelemetryRecords
-     #       - xray:PutTraceSegments
-     #     Resource: "*"
+iam:
+  role:
+    statements:
+      - Effect: Allow
+        Action:
+         - xray:PutTelemetryRecords
+         - xray:PutTraceSegments
+        Resource: "*"
 
 
 functions:
