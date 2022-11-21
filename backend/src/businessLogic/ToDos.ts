@@ -1,19 +1,26 @@
 import {TodoItem} from "../models/TodoItem";
 import {parseUserId} from "../auth/utils";
+//import * as uuid from 'uuid'
 import {CreateTodoRequest} from "../requests/CreateTodoRequest";
 import {UpdateTodoRequest} from "../requests/UpdateTodoRequest";
 import {TodoUpdate} from "../models/TodoUpdate";
 import {ToDoAccess} from "../dataLayer/todosAccess";
+import { createLogger } from "../utils/logger";
 
+const logger = createLogger ('toDoAccess')
+
+//const attachmentutils = new AttachmentUtils()
 const todoID = require('uuid/v4');
 const toDoAccess = new ToDoAccess();
 
+// get todo fn
 export async function getAllToDo(jwtToken: string): Promise<TodoItem[]>  {
+    logger.info('Get todo items for user')
     const userId = parseUserId(jwtToken);
     return toDoAccess.getAllToDo(userId);
 }
 
-// create todo
+// create todo fn
 export const createToDo = (createTodoRequest: CreateTodoRequest, jwtToken: string): Promise<TodoItem> => {
     const userId = parseUserId(jwtToken);
     const todoId =  todoID();
@@ -23,8 +30,8 @@ export const createToDo = (createTodoRequest: CreateTodoRequest, jwtToken: strin
     const date_string = time.toString();
 
     const todo_create = toDoAccess.createToDo({
-        userId: userId,
-        todoId: todoId,
+        userId,
+        todoId,
         attachmentUrl:  `https://${s3Bucket}.s3.amazonaws.com/${todoId}`, 
         createdAt: date_string,
         done: false,
@@ -50,11 +57,3 @@ export const deleteToDo = (todoId: string, jwtToken: string): Promise<string> =>
  export const generateUploadUrl = (todoId: string): Promise<string>  => {
     return toDoAccess.generateUploadUrl(todoId);
 }
-/*
-export {
-    getAllToDo,
-    createToDo,
-    updateToDo,
-    deleteToDo,
-    generateUploadUrl
-}*/

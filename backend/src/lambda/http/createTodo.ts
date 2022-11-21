@@ -4,7 +4,7 @@ import {APIGatewayProxyEvent, APIGatewayProxyHandler, APIGatewayProxyResult} fro
 import {CreateTodoRequest} from '../../requests/CreateTodoRequest';
 import {createToDo} from "../../businessLogic/ToDos";
 
-const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
+export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
     const authorization = event.headers.Authorization;
     const split = authorization.split(' ');
     const jwtToken = split[1];
@@ -14,14 +14,14 @@ const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEvent): Pro
 
     return {
         headers: {
-            "Access-Control-Allow-Origin": "*",
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Credentials': true
         },
         body: JSON.stringify({
-            "todo": toDoItem
+            todo: toDoItem
         }),
         statusCode: 201,
     }
 };
 
 
-export default handler;

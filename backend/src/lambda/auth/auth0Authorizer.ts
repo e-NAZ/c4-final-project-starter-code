@@ -5,7 +5,7 @@ import { createLogger } from '../../utils/logger'
 import Axios from 'axios'
 import { JwtPayload } from '../../auth/JwtPayload'
 
-const logger = createLogger('auth');
+const logger = createLogger('auth')
 
 // TODO: Provide a URL that can be used to download a certificate that can be used
 // to verify JWT token signature.
@@ -13,7 +13,7 @@ const logger = createLogger('auth');
 const jwksUrl = 'https://dev-vico.us.auth0.com/.well-known/jwks.json';
 
 
-const handler = async (
+export const handler = async (
   event: CustomAuthorizerEvent
 ): Promise<CustomAuthorizerResult> => {
 
@@ -24,7 +24,7 @@ const handler = async (
 
     const jwtToken = await verifyToken(event.authorizationToken)
 
-    logger.info('User authorized', jwtToken)
+    logger.info('User is authorized', jwtToken)
 
     return {
       principalId: jwtToken.sub,
@@ -78,7 +78,7 @@ async function verifyToken(authHeader: string): Promise<JwtPayload> {
 }
 
 function getToken(authHeader: string): string {
-  if (!authHeader) throw new Error('token missing!')
+  if (!authHeader) throw new Error('token is missing!')
 
   if (!authHeader.toLowerCase().startsWith('bearer '))
     throw new Error('Invalid Bearer Token supplied')
@@ -89,4 +89,3 @@ function getToken(authHeader: string): string {
   return token
 }
 
-export default handler;

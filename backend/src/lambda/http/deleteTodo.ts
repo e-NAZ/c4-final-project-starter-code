@@ -21,4 +21,3 @@ export const deleteItem: APIGatewayProxyHandler = async (event: APIGatewayProxyE
     }
 };
 
-export default deleteItem;

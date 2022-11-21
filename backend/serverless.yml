@@ -7,16 +7,18 @@ plugins:
   - serverless-webpack
   - serverless-iam-roles-per-function
   - serverless-reqvalidator-plugin
-  - serverless-plugin-tracing
   - serverless-aws-documentation
+  - serverless-plugin-tracing
+
+  
   
 
 provider:
   name: aws
   runtime: nodejs12.x
   lambdaHashingVersion: '20201221'
-  stage: ${opt:stage, 'prod'}
-  region: ${opt:region, 'us-east-2'}
+  stage: ${opt:stage, 'dev'}
+  region: ${opt:region, 'us-east-1'}
 
   tracing:
     lambda: true
@@ -28,8 +30,9 @@ provider:
     PROJECT_NAME: udxtodo-serveless
     TODOS_TABLE: udxtodo-serverless-${self:provider.stage}
     ATTACHMENT_S3_BUCKET: testbucket365-serverless-${self:provider.stage}
-    CREATED_AT_INDEX_TODOS: CreatedAtIndex
+    TODOS_CREATED_AT_INDEX: CreatedAtIndex
     SIGNED_URL_EXPIRATION: 300
+    INDEX_NAME: ${self:provider.environment.TODOS_CREATED_AT_INDEX}
     
 
 
@@ -106,7 +109,7 @@ functions:
       - Effect: Allow
         Action:
           - dynamodb:Query
-        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}
+        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}/index/${self:provider.environment.INDEX_NAME}
       - Effect: Allow
         Action:
           - xray:PutTraceSegments
@@ -126,8 +129,8 @@ functions:
           cors: true
           authorizer: Auth
           documentation:
-            summary: "Create a new todo item"
-            description: "Create a new todo item"
+            summary: "Create a todo item"
+            description: "Creating a todo item"
             requestModels:
               "application/json": CreateTodoRequest
           reqValidatorName: RequestBodyValidator
@@ -157,7 +160,7 @@ functions:
           authorizer: Auth
           documentation:
             summary: "Update a todo item"
-            description: "Update a todo item"
+            description: "Updating a todo item"
             requestModels:
               "application/json": UpdateTodoRequest
           reqValidatorName: RequestBodyValidator
@@ -231,6 +234,8 @@ resources:
             AttributeType: S
           - AttributeName: todoId
             AttributeType: S
+          - AttributeName: createdAt
+            AttributeType: S
         KeySchema:
           - AttributeName: userId
             KeyType: HASH
@@ -238,6 +243,15 @@ resources:
             KeyType: RANGE
         BillingMode: PAY_PER_REQUEST
         TableName: ${self:provider.environment.TODOS_TABLE}
+        LocalSecondaryIndexes:
+          - IndexName: ${self:provider.environment.TODOS_CREATED_AT_INDEX}
+            KeySchema:
+              - AttributeName: userId
+                KeyType: HASH
+              - AttributeName: createdAt
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL # What attributes will be copied to an index
     onlyBody:
       Type: "AWS::ApiGateway::RequestValidator"
       Properties:
