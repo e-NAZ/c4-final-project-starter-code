@@ -1,59 +1,71 @@
-import {TodoItem} from "../models/TodoItem";
-import {parseUserId} from "../auth/utils";
-//import * as uuid from 'uuid'
-import {CreateTodoRequest} from "../requests/CreateTodoRequest";
-import {UpdateTodoRequest} from "../requests/UpdateTodoRequest";
-import {TodoUpdate} from "../models/TodoUpdate";
-import {ToDoAccess} from "../dataLayer/todosAccess";
-import { createLogger } from "../utils/logger";
+import { TodosAccess } from '../dataLayer/todosAcess'
+import { AttachmentUtils } from '../helpers/attachmentUtils';
+import { TodoItem } from '../models/TodoItem'
+import { CreateTodoRequest } from '../requests/CreateTodoRequest'
+import { UpdateTodoRequest } from '../requests/UpdateTodoRequest'
+import { createLogger } from '../utils/logger'
+import * as uuid from 'uuid'
+import { TodoUpdate } from '../models/TodoUpdate';
+//import { TodoUpdate } from '../models/TodoUpdate';
+//import * as createError from 'http-errors'
 
-const logger = createLogger ('toDoAccess')
+// TODO: Implement businessLogic
 
-//const attachmentutils = new AttachmentUtils()
-const todoID = require('uuid/v4');
-const toDoAccess = new ToDoAccess();
+const logger = createLogger('TodoAccess')
+const attachmentUtils = new AttachmentUtils()
+const todosAcess = new TodosAccess()
 
-// get todo fn
-export async function getAllToDo(jwtToken: string): Promise<TodoItem[]>  {
-    logger.info('Get todo items for user')
-    const userId = parseUserId(jwtToken);
-    return toDoAccess.getAllToDo(userId);
+
+// get todo items
+
+export async function getTodosForUser(userId: string): Promise<TodoItem[]> {
+    logger.info('fetch all user todos')
+    return todosAcess.getAllUserTodos(userId)
 }
 
-// create todo fn
-export const createToDo = (createTodoRequest: CreateTodoRequest, jwtToken: string): Promise<TodoItem> => {
-    const userId = parseUserId(jwtToken);
-    const todoId =  todoID();
-    const s3Bucket = process.env.ATTACHMENT_S3_BUCKET;
-    const curr_date = new Date();
-    const time = curr_date.getTime();
-    const date_string = time.toString();
-
-    const todo_create = toDoAccess.createToDo({
+// creating todo item
+export async function createTodo(
+    newTodo: CreateTodoRequest,
+    userId: string
+): Promise<TodoItem> {
+    logger.info('Creating a todo item')
+    const todoId = uuid.v4()
+    const AttachmentUrl = attachmentUtils.getAttachmentUrl(todoId)
+    const createdAt = new Date().toISOString()
+    const newItem = {
         userId,
         todoId,
-        attachmentUrl:  `https://${s3Bucket}.s3.amazonaws.com/${todoId}`, 
-        createdAt: date_string,
+        createdAt,
         done: false,
-        ...createTodoRequest,
-    });
-    
-    return todo_create;
+        attachmentUrl: AttachmentUrl,
+        ...newTodo
+    }
+
+    return await todosAcess.createTodoItem(newItem)
 }
 
-// update Todo
- export const updateToDo = (updateTodoRequest: UpdateTodoRequest, todoId: string, jwtToken: string): Promise<TodoUpdate>  => {
-    const userId = parseUserId(jwtToken);
-    return toDoAccess.updateToDo(updateTodoRequest, todoId, userId);
+// update todo item
+
+export async function updateTodo(TodoUpdate: UpdateTodoRequest, userId: string, todoId: string):
+    Promise<TodoUpdate> {
+    logger.info('updating todo items..')
+    return await todosAcess.updateTodoItem(todoId, userId, TodoUpdate)
 }
 
- // delete Todo
-export const deleteToDo = (todoId: string, jwtToken: string): Promise<string> => {
-    const userId = parseUserId(jwtToken);
-    return toDoAccess.deleteToDo(todoId, userId);
+// delete todo item
+export async function deleteTodo(
+    todoId: string,
+    userId: string
+): Promise<string> {
+    logger.info(' deleting todo items')
+    return todosAcess.deleteTodoItem(todoId, userId)
 }
 
-// generate upload URL
- export const generateUploadUrl = (todoId: string): Promise<string>  => {
-    return toDoAccess.generateUploadUrl(todoId);
+//create a presignedurl 
+export async function createAttachmentPresignedUrl(
+    todoId: string,
+    userId: string
+): Promise<string> {
+    logger.info('creating attahcment pre-signed URL', todoId, userId)
+    return attachmentUtils.UploadUrl(todoId)
 }

@@ -1,27 +1,40 @@
 import 'source-map-support/register'
-import {APIGatewayProxyEvent, APIGatewayProxyHandler, APIGatewayProxyResult} from 'aws-lambda'
-import {UpdateTodoRequest} from '../../requests/UpdateTodoRequest'
-import {updateToDo} from "../../businessLogic/ToDos";
 
-const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
-    const authorization = event.headers.Authorization;
-    const split = authorization.split(' ');
-    const jwtToken = split[1];
+import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda'
+import * as middy from 'middy'
+import { cors, httpErrorHandler } from 'middy/middlewares'
 
-    const todoItem = event.pathParameters.todoId;
-    const updatedTodoItem: UpdateTodoRequest = JSON.parse(event.body);
+import { updateTodo } from '../../businessLogic/todos'
+import { UpdateTodoRequest } from '../../requests/UpdateTodoRequest'
+import { getUserId } from '../utils'
+//import { createLogger } from '../../utils/logger'
 
-    const toDoItem = await updateToDo(updatedTodoItem, todoItem, jwtToken);
+export const handler = middy(
+  async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
+    const userId = getUserId(event)
+    const todoId = event.pathParameters.todoId
+    const updatedTodo: UpdateTodoRequest = JSON.parse(event.body)
+    //const logger = createLogger('updating todos')
 
-    return {
-        statusCode: 200,
+    // TODO: Update a TODO item with the provided id using values in the "updatedTodo" object
+
+
+      const todoItem = await updateTodo(updatedTodo, todoId, userId)
+      return {
+        statusCode: 204,
         headers: {
-            "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Origin": "*",
         },
         body: JSON.stringify({
-            "item": toDoItem
-        }),
+          "item": todoItem
+        })
+      }
     }
-};
-
-export default handler;
+)
+handler
+  .use(httpErrorHandler())
+  .use(
+    cors({
+      credentials: true
+    })
+  )
