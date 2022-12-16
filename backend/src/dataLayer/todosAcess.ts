@@ -5,7 +5,9 @@ import { TodoItem } from '../models/TodoItem'
 import { TodoUpdate } from '../models/TodoUpdate';
 
 const AWSXRay = require('aws-xray-sdk')
+
 const XAWS = AWSXRay.captureAWS(AWS)
+
 const logger = createLogger('TodosAccess')
 
 // TODO: Implement the dataLayer logic
@@ -59,7 +61,7 @@ export class TodosAccess {
         todoId: string
         ) {
 
-        logger.info('Updating todo items', todoUpdate, `todoId: ${todoId}`)
+            logger.info('Updating todo items', todoUpdate, `todoId: ${todoId}`)
 
         const result = await this.docClient.get({
             TableName: this.todoTable,
@@ -81,11 +83,9 @@ export class TodosAccess {
                 userId: userId,
                 todoId: todoId
             },
-            UpdateExpression: 'SET hecho = :done, #nombre = :name, fecha = :dueDate',
+            UpdateExpression: 'SET done = :done, #name = :name, dueDate = :dueDate',
             ExpressionAttributeNames: {
-                '#nombre': 'name',
-                '#fecha': 'dueDate',
-                '#hecho': 'done'
+                '#name': 'name'
             },
             ExpressionAttributeValues: {
                 ':done': todoUpdate.done,
