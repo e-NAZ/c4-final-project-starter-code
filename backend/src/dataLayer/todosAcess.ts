@@ -35,7 +35,7 @@ export class TodosAccess {
         }).promise()
 
         const todos = result.Items
-        logger.info('get todos item result', `UserId ${userId}`, result.Items,)
+        logger.info('Get all todos result', `UserId ${userId}`, result.Items,)
 
         return todos as TodoItem[];
     }
